@@ -14,7 +14,7 @@ yt-dlp — это мощный инструмент командной стро�
 
 ## Установка
 
-Репозицторий на гитхаб https://github.com/yt-dlp/yt-dlp/wiki/Installation
+Репозиторий на гитхаб https://github.com/yt-dlp/yt-dlp/wiki/Installation
 
 ### Windows
 ```
