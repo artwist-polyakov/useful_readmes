@@ -16,7 +16,7 @@
 
 ## ⚙️ Требования:
 
-- VPS с Ubuntu 20+ (например, 2 ГБ RAM). Лично я беру серверы тут [VDSina.com — партнерская сылка 10% бонус к пополнениюъ](https://www.vdsina.com/?partner=1r8tcykewa) или [Firstbyte](https://firstbyte.ru/?from=196382)
+- VPS с Ubuntu 20+ (например, 2 ГБ RAM). Лично я беру серверы тут [VDSina.com — партнерская сылка 10% бонус к пополнению](https://www.vdsina.com/?partner=1r8tcykewa) или [Firstbyte](https://firstbyte.ru/?from=196382)
 - Установленный Docker
 - Домен + доступ к DNS (я держу домены в reg.ru)
 
