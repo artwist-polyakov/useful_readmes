@@ -38,6 +38,7 @@ Create a directory to persist data:
 
 ```bash
 mkdir -p ~/n8n_data
+mkdir -p ~/n8n_files
 ```
 
 Then run the container:
@@ -53,11 +54,13 @@ docker run -d --restart unless-stopped \
   n8nio/n8n
 ```
 
-**Important**: If you're copying in data manually, make sure the directory has the right permissions:
+**Important**: Let's make right permissions in created folders:
 
 ```bash
 sudo chown -R 1000:1000 ~/n8n_data
 sudo chmod -R u+rwX ~/n8n_data
+sudo chown -R 1000:1000 ~/n8n_files
+sudo chmod -R u+rwX ~/n8n_files
 ```
 
 ---
