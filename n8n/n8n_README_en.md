@@ -48,6 +48,7 @@ docker run -d --restart unless-stopped \
   --name n8n \
   -p 5678:5678 \
   -v ~/n8n_data:/home/node/.n8n \
+  -v ~/n8n_files:/files \
   -e N8N_HOST="n8n.your-domain.com" \
   -e WEBHOOK_TUNNEL_URL="https://n8n.your-domain.com/" \
   -e WEBHOOK_URL="https://n8n.your-domain.com/" \
