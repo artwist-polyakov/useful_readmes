@@ -224,3 +224,9 @@ crontab -e
 - Проверка nginx: `sudo nginx -t`
 - Перезапуск nginx: `sudo systemctl reload nginx`
 - Логи n8n: `docker logs -f n8n`
+- Стоп и удаление коконтейнера
+  ```bash
+docker stop n8n
+docker rm n8n
+```
+
