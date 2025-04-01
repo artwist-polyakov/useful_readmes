@@ -41,11 +41,18 @@ mkdir -p ~/n8n_data
 mkdir -p ~/n8n_files
 ```
 
+Create a network for postgres connection
+
+```bash
+docker network create n8n-net
+```
+
 Then run the container:
 
 ```bash
 docker run -d --restart unless-stopped \
   --name n8n \
+  --network n8n-net \
   -p 5678:5678 \
   -v ~/n8n_data:/home/node/.n8n \
   -v ~/n8n_files:/files \
