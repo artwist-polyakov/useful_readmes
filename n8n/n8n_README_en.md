@@ -52,6 +52,7 @@ docker run -d --restart unless-stopped \
   -e N8N_HOST="n8n.your-domain.com" \
   -e WEBHOOK_TUNNEL_URL="https://n8n.your-domain.com/" \
   -e WEBHOOK_URL="https://n8n.your-domain.com/" \
+  -e N8N_COMMUNITY_PACKAGES_ALLOW_TOOL_USAGE=true \
   n8nio/n8n
 ```
 
