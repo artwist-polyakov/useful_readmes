@@ -11,3 +11,10 @@
 apt update && apt upgrade -y
 apt install curl -y
 ```
+установим панель 3X-UI
+
+```bash
+
+bash <(curl -Ls https://raw.githubusercontent.com/mhsanaei/3x-ui/master/install.sh)
+
+```
