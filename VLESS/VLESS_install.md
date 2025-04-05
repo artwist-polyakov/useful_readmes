@@ -5,3 +5,9 @@
 
 ## Установка 3x-ui
 
+Сначала устанавливаем curl
+
+```bash
+apt update && apt upgrade -y
+apt install curl -y
+```
