@@ -65,5 +65,14 @@ sudo nano /etc/ssh/sshd_config
 
 Делаем PermitRootLogin — **no**
 
-Доступ в 
+## Конфигурация клиента
 
+Создаём новое соединение.
+uTLS — chrome.
+Dest — google.com:443
+Server names — google.com, www.google.com
+
+Ключи получаем через кнопку генерации ключей.
+
+
+Sniffing — enabled + все галки
