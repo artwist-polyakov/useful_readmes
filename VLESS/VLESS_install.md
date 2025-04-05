@@ -18,3 +18,9 @@ apt install curl -y
 bash <(curl -Ls https://raw.githubusercontent.com/mhsanaei/3x-ui/master/install.sh)
 
 ```
+
+В ходе установки попросит ввести порт. Это может быть любое число до 65535.
+Считается, что лучше, чтобы число было ближе к концу диапазона, но подтверждения этому нет. 
+
+## Установка fail2bin
+
