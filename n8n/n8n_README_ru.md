@@ -234,7 +234,7 @@ crontab -e
 
 ```bash
 
-docker pull docker.n8n.io/n8nio/n8n
+docker pull n8nio/n8n
 
 ```
 
