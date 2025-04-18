@@ -217,77 +217,164 @@ for i, (doc, score) in enumerate(found_docs):
    - Начните с малого набора данных и постепенно добавляйте новые примеры.
    - Сохраняйте промежуточные версии модели для сравнения.
 
-## Асинхронное обучение для больших наборов данных
+## Масштабирование обучения для больших наборов данных
 
-Для обработки больших наборов данных (например, 10,000+ товаров) полезно использовать асинхронные подходы:
+Для обработки больших наборов данных (например, 10,000+ товаров) PyTorch предоставляет эффективные инструменты:
 
 ```python
-import asyncio
 import torch
 from sentence_transformers import SentenceTransformer, InputExample, losses
-from torch.utils.data import DataLoader
+from torch.utils.data import DataLoader, Dataset
 import os
 import time
-import concurrent.futures
+import json
 
-async def load_training_data(data_file):
-    """Асинхронная загрузка данных из файла"""
-    training_pairs = []
-    # Загрузка данных...
-    return training_pairs
-
-async def create_batch_examples(training_pairs, start_idx, batch_size):
-    """Создание батча обучающих примеров"""
-    examples = []
-    end_idx = min(start_idx + batch_size, len(training_pairs))
+class CatalogDataset(Dataset):
+    """Датасет для каталога товаров и запросов"""
+    def __init__(self, training_pairs):
+        self.examples = []
+        for query, item, score in training_pairs:
+            self.examples.append(InputExample(texts=[query, item], label=score))
     
-    for i in range(start_idx, end_idx):
-        query, item, score = training_pairs[i]
-        examples.append(InputExample(texts=[query, item], label=score))
-        
-    return examples
+    def __len__(self):
+        return len(self.examples)
+    
+    def __getitem__(self, idx):
+        return self.examples[idx]
 
-async def train_model_async(model, training_pairs, epochs=3, batch_size=32):
-    """Асинхронное обучение модели по батчам"""
+def load_training_data(data_file):
+    """Загрузка обучающих данных из файла"""
+    with open(data_file, 'r', encoding='utf-8') as f:
+        data = json.load(f)
+    return data
+
+def train_model_efficient(model, training_pairs, epochs=3, batch_size=32):
+    """Эффективное обучение модели с использованием параллелизма PyTorch"""
+    # Создаем датасет
+    train_dataset = CatalogDataset(training_pairs)
+    
+    # Используем DataLoader с многопоточной загрузкой
+    train_dataloader = DataLoader(
+        train_dataset, 
+        batch_size=batch_size, 
+        shuffle=True,
+        num_workers=4,  # Параллельная загрузка данных
+        pin_memory=True  # Оптимизация для GPU
+    )
+    
+    # Для нескольких GPU используем DataParallel
+    if torch.cuda.device_count() > 1:
+        print(f"Используем {torch.cuda.device_count()} GPU!")
+        model = torch.nn.DataParallel(model)
+    
+    # Функция потерь и обучение
     train_loss = losses.CosineSimilarityLoss(model)
     
-    for epoch in range(epochs):
-        print(f"Эпоха {epoch+1}/{epochs}")
-        
-        # Создаем задачи для батчей
-        tasks = []
-        for i in range(0, len(training_pairs), batch_size):
-            task = create_batch_examples(training_pairs, i, batch_size)
-            tasks.append(task)
-            
-        # Обрабатываем батчи асинхронно
-        batches = await asyncio.gather(*tasks)
-        
-        # Обучаем на каждом батче
-        for batch_examples in batches:
-            train_dataloader = DataLoader(batch_examples, shuffle=True, batch_size=len(batch_examples))
-            model.fit(
-                train_objectives=[(train_dataloader, train_loss)],
-                epochs=1,
-                warmup_steps=0,
-                show_progress_bar=True
-            )
+    # Стандартное обучение с оптимизацией PyTorch
+    model.fit(
+        train_objectives=[(train_dataloader, train_loss)],
+        epochs=epochs,
+        warmup_steps=100,
+        show_progress_bar=True
+    )
     
     return model
 
 # Пример использования
-async def main():
-    model = SentenceTransformer("sberbank-ai/sbert_large_mt_nlu_ru")
+def main():
+    # Определяем устройство для обучения
     device = 'mps' if torch.backends.mps.is_available() else 'cuda' if torch.cuda.is_available() else 'cpu'
+    print(f"Используется устройство: {device}")
+    
+    # Загружаем модель
+    model = SentenceTransformer("sberbank-ai/sbert_large_mt_nlu_ru")
     model.to(device)
     
-    training_pairs = await load_training_data("data.json")
-    model = await train_model_async(model, training_pairs)
+    # Загружаем данные
+    training_pairs = load_training_data("catalog_data.json")
+    
+    # Обучаем модель
+    start_time = time.time()
+    model = train_model_efficient(model, training_pairs)
+    elapsed_time = time.time() - start_time
+    print(f"Обучение завершено за {elapsed_time:.2f} секунд")
+    
+    # Сохраняем модель
     model.save("custom_catalog_model")
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    main()
 ```
+
+### Распределенное обучение на нескольких машинах
+
+Для очень больших датасетов или моделей можно использовать распределенное обучение PyTorch:
+
+```python
+# Запуск в терминале:
+# python -m torch.distributed.launch --nproc_per_node=NUM_GPUS_PER_NODE train_distributed.py
+
+import torch
+import torch.distributed as dist
+from sentence_transformers import SentenceTransformer, InputExample, losses
+from torch.utils.data import DataLoader, Dataset, DistributedSampler
+import os
+import time
+import json
+
+def setup(rank, world_size):
+    """Инициализация распределенного обучения"""
+    os.environ['MASTER_ADDR'] = 'localhost'
+    os.environ['MASTER_PORT'] = '12355'
+    dist.init_process_group("nccl", rank=rank, world_size=world_size)
+
+def cleanup():
+    """Завершение распределенного обучения"""
+    dist.destroy_process_group()
+
+def train_distributed(rank, world_size, training_pairs):
+    # Настройка распределенного обучения
+    setup(rank, world_size)
+    
+    # Загрузка модели на каждом устройстве
+    model = SentenceTransformer("sberbank-ai/sbert_large_mt_nlu_ru")
+    model.to(rank)
+    
+    # Создание датасета и distributed sampler
+    train_dataset = CatalogDataset(training_pairs)
+    sampler = DistributedSampler(train_dataset, num_replicas=world_size, rank=rank)
+    
+    # DataLoader с sampler
+    train_dataloader = DataLoader(
+        train_dataset, 
+        batch_size=32,
+        sampler=sampler,
+        num_workers=4,
+        pin_memory=True
+    )
+    
+    # Обучение
+    train_loss = losses.CosineSimilarityLoss(model)
+    model.fit(
+        train_objectives=[(train_dataloader, train_loss)],
+        epochs=3,
+        warmup_steps=100,
+        show_progress_bar=True
+    )
+    
+    # Сохранение модели только на первом ранге
+    if rank == 0:
+        model.save("custom_catalog_model")
+    
+    cleanup()
+```
+
+Для больших объемов данных рекомендуется:
+
+1. **Использовать встроенный параллелизм PyTorch** вместо собственной реализации асинхронности
+2. **Оптимизировать процесс загрузки данных** с помощью `num_workers` в DataLoader
+3. **Для нескольких GPU** использовать `DataParallel` или `DistributedDataParallel`
+4. **Для обучения на нескольких машинах** настроить распределенное обучение через `torch.distributed`
 
 ## Заключение
 
