@@ -386,4 +386,4 @@ Fine-tuning модели эмбеддингов позволяет сущест�
 
 - [Документация Sentence Transformers](https://www.sbert.net/)
 - [Руководство по fine-tuning в HuggingFace](https://huggingface.co/docs/transformers/main/en/training)
-- [Документация LangChain по векторным хранилищам](https://python.langchain.com/docs/modules/data_connection/vectorstores/)
+- [Документация LangChain по векторным хранилищам](https://python.langchain.com/docs/integrations/vectorstores/)
