@@ -97,6 +97,69 @@ sudo nano /etc/nginx/sites-available/n8n.conf
 Вставьте:
 
 ```nginx
+
+server {
+    listen 80;
+    server_name n8n.ваш-домен.ru;
+
+    location / {
+        proxy_pass http://localhost:5678;
+        proxy_http_version 1.1;
+
+        proxy_buffering on;
+        proxy_buffers 8 256k;
+        proxy_buffer_size 128k;
+        proxy_busy_buffers_size 512k;
+        proxy_max_temp_file_size 0;
+
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+    }
+}
+```
+
+
+Активируйте сайт:
+
+```bash
+sudo ln -s /etc/nginx/sites-available/n8n.conf /etc/nginx/sites-enabled/
+sudo nginx -t
+sudo systemctl reload nginx
+```
+
+
+
+Активируйте сайт:
+
+```bash
+sudo ln -s /etc/nginx/sites-available/n8n.conf /etc/nginx/sites-enabled/
+sudo nginx -t
+sudo systemctl reload nginx
+```
+
+---
+
+## 🔒 4. Установка HTTPS
+
+```bash
+sudo certbot --nginx -d n8n.ваш-домен.ru
+```
+
+Let's Encrypt автоматически настроит сертификат и включит автоматическое продление.
+
+---
+
+Обновляем nginx 
+
+Для удаления строк в nano используем `ctrl` + `k`
+
+
+```nginx
 server {
     listen 443 ssl;
     server_name n8n.ваш-домен.ru;
@@ -139,25 +202,13 @@ server {
 }
 ```
 
-Активируйте сайт:
+Снова перезапускаем сайт:
 
 ```bash
 sudo ln -s /etc/nginx/sites-available/n8n.conf /etc/nginx/sites-enabled/
 sudo nginx -t
 sudo systemctl reload nginx
 ```
-
----
-
-## 🔒 4. Установка HTTPS
-
-```bash
-sudo certbot --nginx -d n8n.ваш-домен.ru
-```
-
-Let's Encrypt автоматически настроит сертификат и включит автоматическое продление.
-
----
 
 ## 💾 5. Автоматические бэкапы
 
