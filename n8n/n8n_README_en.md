@@ -17,6 +17,7 @@ A complete guide to deploying `n8n` on a VPS with Ubuntu, custom domain, automat
 ## ⚙️ Requirements:
 
 - A VPS with Ubuntu 20+ (2 GB RAM recommended)
+- I usually rent servers from [VDSina.com — referral link with a 10% top-up bonus](https://www.vdsina.com/?partner=1r8tcykewa) or [Firstbyte](https://firstbyte.ru/?from=196382)
 - Docker installed
 - A registered domain with DNS management (e.g., via reg.ru)
 
@@ -33,6 +34,9 @@ n8n     A     <Your Server's Public IP>
 ---
 
 ## 🐳 2. Running n8n via Docker
+
+For SSH access I prefer the [Termius](https://termius.com) app.
+Make sure Docker is installed on the server: [official instructions](https://docs.docker.com/engine/install/ubuntu/)
 
 Create a directory to persist data:
 
@@ -89,7 +93,55 @@ Create a configuration file:
 sudo nano /etc/nginx/sites-available/n8n.conf
 ```
 
-Paste the following:
+Paste the following initial configuration **without SSL**:
+
+```nginx
+server {
+    listen 80;
+    server_name n8n.your-domain.com;
+
+    location / {
+        proxy_pass http://localhost:5678;
+        proxy_http_version 1.1;
+
+        proxy_buffering on;
+        proxy_buffers 8 256k;
+        proxy_buffer_size 128k;
+        proxy_busy_buffers_size 512k;
+        proxy_max_temp_file_size 0;
+
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+    }
+}
+```
+
+Enable the site:
+
+```bash
+sudo ln -s /etc/nginx/sites-available/n8n.conf /etc/nginx/sites-enabled/
+sudo nginx -t
+sudo systemctl reload nginx
+```
+
+---
+
+## 🔒 4. Enabling HTTPS
+
+```bash
+sudo certbot --nginx -d n8n.your-domain.com
+```
+
+Let's Encrypt will automatically configure your SSL and enable auto-renewal.
+
+After the certificate is issued, edit `n8n.conf` to include SSL and redirect HTTP
+to HTTPS. Use `Ctrl + K` in `nano` to remove old lines and replace them with the
+following configuration:
 
 ```nginx
 server {
@@ -134,23 +186,13 @@ server {
 }
 ```
 
-Enable the site:
+Reload nginx:
 
 ```bash
-sudo ln -s /etc/nginx/sites-available/n8n.conf /etc/nginx/sites-enabled/
+sudo ln -sf /etc/nginx/sites-available/n8n.conf /etc/nginx/sites-enabled/
 sudo nginx -t
 sudo systemctl reload nginx
 ```
-
----
-
-## 🔒 4. Enabling HTTPS
-
-```bash
-sudo certbot --nginx -d n8n.your-domain.com
-```
-
-Let's Encrypt will automatically configure your SSL and enable auto-renewal.
 
 ---
 
@@ -219,3 +261,16 @@ Now you have:
 - Test nginx config: `sudo nginx -t`
 - Reload nginx: `sudo systemctl reload nginx`
 - View n8n logs: `docker logs -f n8n`
+- Stop and remove the container
+  ```bash
+  docker stop n8n
+  docker rm n8n
+  ```
+
+## Update
+
+```bash
+docker pull n8nio/n8n
+```
+
+Then restart the container after stopping and removing the previous version.
