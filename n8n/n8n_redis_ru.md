@@ -60,9 +60,12 @@ docker run -d --restart unless-stopped \
   --name n8n \
   --network n8n-net \
   -p 5678:5678 \
-  # ... ваши текущие переменные ...
+  -v ~/n8n_data:/home/node/.n8n \
+  -v ~/n8n_files:/files \
   -e N8N_HOST="n8n.ваш-домен.ru" \
-  -e WEBHOOK_TUNNEL_URL="[https://n8n.ваш-домен.ru/](https://n8n.ваш-домен.ru/)" \
+  -e WEBHOOK_TUNNEL_URL="https://n8n.ваш-домен.ru/" \
+  -e WEBHOOK_URL="https://n8n.ваш-домен.ru/" \
+  -e N8N_COMMUNITY_PACKAGES_ALLOW_TOOL_USAGE=true \
   \
   # ----- Новые переменные для ГЛОБАЛЬНОГО кэша -----
   -e CACHE_ENABLED=true \
