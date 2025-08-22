@@ -182,29 +182,41 @@ sudo nano /etc/asterisk/pjsip.conf
 [global]
 type=global
 user_agent=MyAsteriskProxy
-; Замените на ваш публичный IP или домен сервера
-external_signaling_address=YOUR_SERVER_IP
-external_media_address=YOUR_SERVER_IP
-local_net=192.168.0.0/16
-local_net=10.0.0.0/8
-local_net=172.16.0.0/12
+endpoint_identifier_order=ip,username,anonymous
 
 ; ===== ТРАНСПОРТЫ =====
 [transport-tcp]
 type=transport
 protocol=tcp
 bind=0.0.0.0:5060
+external_signaling_address=146.103.122.8
+external_media_address=146.103.122.8
+local_net=192.168.0.0/16
+local_net=10.0.0.0/8
+local_net=172.16.0.0/12
 
 [transport-tls]
 type=transport
 protocol=tls
 bind=0.0.0.0:5061
 method=tlsv1_2
+external_signaling_address=146.103.122.8
+external_media_address=146.103.122.8
+local_net=192.168.0.0/16
+local_net=10.0.0.0/8
+local_net=172.16.0.0/12
+verify_server=no
+verify_client=no
 
 [transport-udp]
 type=transport
 protocol=udp
 bind=0.0.0.0:5060
+external_signaling_address=146.103.122.8
+external_media_address=146.103.122.8
+local_net=192.168.0.0/16
+local_net=10.0.0.0/8
+local_net=172.16.0.0/12
 
 ; ===== ПОДКЛЮЧЕНИЕ К MANGO OFFICE =====
 [mango-registration]
@@ -223,6 +235,12 @@ auth_type=userpass
 username=eleven
 password=YOUR_MANGO_PASSWORD
 
+[mango-trunk-aor]
+type=aor
+remove_existing=yes
+maximum_expiration=3600
+qualify_frequency=60
+
 [mango-trunk]
 type=endpoint
 transport=transport-tcp
@@ -230,22 +248,26 @@ context=from-mango
 disallow=all
 allow=alaw,ulaw
 outbound_auth=mango-auth
-aors=mango-aor
+aors=mango-trunk-aor
 direct_media=no
 force_rport=yes
 rtp_symmetric=yes
-
-[mango-aor]
-type=aor
-; Замените на домен sip trunk
-contact=sip:SIP_TRUNK_DOMAIN.mangosip.ru
+rewrite_contact=yes
+rtp_timeout=8            ; если 8 сек нет RTP — рвём
+rtp_timeout_hold=12
+rtp_keepalive=1          ; посылаем пустышки, чтобы NAT не засыпал
+timers=yes
+timers_min_se=90
+timers_sess_expires=1800
 
 ; Идентификация входящих звонков от Mango
 [mango-identify]
 type=identify
 endpoint=mango-trunk
-; IP-адрес может отличаться, проверьте в логах
-match=81.88.86.55
+; сигнализация Mango (SIP/TCP/UDP 5060 и 60000)
+match=81.88.86.0/24
+; медиасерверы Mango (RTP/UDP 1024-65535)
+match=81.88.88.0/24
 
 ; ===== ПОДКЛЮЧЕНИЕ К ELEVENLABS =====
 [elevenlabs-auth]
@@ -255,23 +277,30 @@ auth_type=userpass
 username=YOUR_ELEVENLABS_USER
 password=YOUR_ELEVENLABS_PASSWORD
 
+[elevenlabs-aor]
+type=aor
+contact=sip:sip.rtc.elevenlabs.io:5061;transport=tls ; ‹- Самая • важная строка
+
 [elevenlabs-trunk]
 type=endpoint
 transport=transport-tls
+aors=elevenlabs-aor
 context=from-elevenlabs
 disallow=all
 allow=alaw,ulaw
 outbound_auth=elevenlabs-auth
-aors=elevenlabs-aor
 direct_media=no
 force_rport=yes
 rtp_symmetric=yes
 ; Явно указываем ElevenLabs как прокси-сервер для всех исходящих вызовов
 outbound_proxy=sip:sip.rtc.elevenlabs.io:5061\;transport=tls
+rtp_timeout=8
+rtp_timeout_hold=12
+rtp_keepalive=1
+timers=yes
+timers_min_se=90
+timers_sess_expires=1800
 
-[elevenlabs-aor]
-type=aor
-contact=sip:sip.rtc.elevenlabs.io:5061;transport=tls ; ‹- Самая • важная строка
 ```
 
 ### 5.2 Создание файла extensions.conf
