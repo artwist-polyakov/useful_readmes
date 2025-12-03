@@ -190,6 +190,44 @@ yt-dlp --no-check-certificate URL
 yt-dlp --cookies cookies.txt URL
 ```
 
+### Проблема: MP4 файл не открывается на Mac (QuickTime)
+
+Если скачанный MP4 файл не воспроизводится в QuickTime на Mac, несмотря на правильные кодеки, попробуйте следующие решения:
+
+#### Решение 1: Скачивание сразу в формате MOV
+```
+yt-dlp -f "bestvideo[ext=mp4]+bestaudio[ext=m4a]" --merge-output-format mov URL
+```
+
+или проще:
+```
+yt-dlp --remux-video mov URL
+```
+
+#### Решение 2: Конвертация уже скачанного файла
+Если файл уже скачан, конвертируйте его в MOV с помощью ffmpeg:
+```
+ffmpeg -i "input.mp4" -c:v libx264 -preset medium -crf 23 -pix_fmt yuv420p -c:a aac -b:a 192k -movflags +faststart "output.mov"
+```
+
+#### Решение 3: Скачивание с конвертацией в совместимый MP4
+```
+yt-dlp "URL" --recode-video mp4 --postprocessor-args "-vcodec libx264 -acodec aac"
+```
+
+#### Решение 4: Использовать VLC Player
+Альтернативный вариант — установить VLC, который поддерживает больше кодеков:
+```
+brew install --cask vlc
+```
+
+#### Решение 5: Указать конкретные кодеки при скачивании
+```
+yt-dlp -f "bestvideo[height<=1080][vcodec^=avc]+bestaudio[ext=m4a]" --merge-output-format mp4 URL
+```
+
+Эти методы гарантируют, что видео будет воспроизводиться в QuickTime и других стандартных плеерах macOS.
+
 ## Примеры использования
 
 ### Пример 1: Скачивание видео с YouTube в формате MP4 1080p
